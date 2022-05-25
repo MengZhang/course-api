@@ -1,0 +1,49 @@
+[{
+  "_id": {
+    "$oid": "6287104fe2c1b4d875274118"
+  },
+  "id": 1,
+  "name": "initla cource",
+  "status": "in_production",
+  "createdAt": "2001-02-03T04:05:06Z",
+  "updatedAt": "2001-02-03T04:05:06Z",
+  "deletedAt": "2001-02-03T04:05:06Z"
+},{
+  "_id": {
+    "$oid": "6287113fe2c1b4d875274119"
+  },
+  "id": 2,
+  "name": "initla cource2",
+  "status": "in_production",
+  "createdAt": "2001-02-04T04:05:06Z",
+  "updatedAt": "2001-02-04T04:05:06Z"
+},{
+  "_id": {
+    "$oid": "628dc2b215850637dd4c6e19"
+  },
+  "id": 3,
+  "name": "test789",
+  "status": "available",
+  "createdAt": "2022-05-25T01:46:25Z",
+  "updatedAt": "2022-05-25T03:21:36Z"
+},{
+  "_id": {
+    "$oid": "628e81c08f4f97641b102618"
+  },
+  "id": 4,
+  "name": "for delete",
+  "status": "scheduled",
+  "createdAt": "2022-05-25T03:21:36Z",
+  "updatedAt": "2022-05-25T03:21:36Z",
+  "deletedAt": "2022-05-25T03:21:36Z",
+  "updatedAt ": "2022-05-25T03:21:36Z"
+},{
+  "_id": {
+    "$oid": "628e81c18f4f97641b102619"
+  },
+  "id": 5,
+  "name": "course1653506496959",
+  "status": "scheduled",
+  "createdAt": "2022-05-25T03:21:37Z",
+  "updatedAt": "2022-05-25T03:21:37Z"
+}]
