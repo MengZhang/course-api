@@ -143,7 +143,7 @@ public class CoursesAPI {
                     .append("createdAt", timeStamp)
                     .append("updatedAt", timeStamp));
             if (ret) {
-                return Response.status(Status.CREATED).location(URI.create("/courses/" + newId)).build();
+                return Response.status(Status.CREATED).location(URI.create("courses/" + newId)).build();
             } else {
                 return Response.status(Status.CONFLICT).build();
             }
