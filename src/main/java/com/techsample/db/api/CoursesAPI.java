@@ -71,6 +71,7 @@ public class CoursesAPI {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response listCourses() {
+        LOG.debug("Receive list courses request");
         JSONObject ret = new JSONObject();
         try {
             ret.put("courses", list(DBUtil.getCollection(), fields(include("id", "name"), excludeId())));
@@ -78,6 +79,7 @@ public class CoursesAPI {
             LOG.warn(ex.getMessage());
             return Response.status(Status.INTERNAL_SERVER_ERROR).build();
         }
+        LOG.debug("Response list courses successfully");
         return Response.ok(ret.toJSONString()).build();
     }
     /**
@@ -93,6 +95,7 @@ public class CoursesAPI {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response findCourse(@PathParam("id") int id) {
+        LOG.debug("Receive find courses request with id = {}", id);
         try {
             Document ret = find(DBUtil.getCollection(), eq("id", id), fields(
                     include("id", "name", "status", "updatedAt", "deletedAt"),
@@ -100,10 +103,13 @@ public class CoursesAPI {
                     excludeId()));
             
             if (ret == null) {
+                LOG.debug("Response find courses not found");
                 return Response.status(Status.NOT_FOUND).build();
             } else if (ret.get("deletedAt") != null){
+                LOG.debug("Response find courses gone");
                 return Response.status(Status.GONE).build();
             } else {
+                LOG.debug("Response find courses successfully");
                 return Response.ok(ret.toJson()).build();
             }
             
@@ -123,20 +129,24 @@ public class CoursesAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createCourse(String jsonRequest) {
+        LOG.debug("Receive create courses request with JSON = {}", jsonRequest);
         JSONObject jsonObj = DataUtil.readJsonStr(jsonRequest);
         if (jsonObj == null) {
+            LOG.debug("Response create courses bad request (missing json)");
             return Response.status(Status.BAD_REQUEST).build();
         }
         String name = (String) jsonObj.get("name");
         String status = (String) jsonObj.get("status");
         // validate input params
         if (name == null || "".equals(name.trim()) || status == null || !CourseStatus.isValid(status)) {
+            LOG.debug("Response create courses bad request (missing or blank value)");
             return Response.status(Status.BAD_REQUEST).build();
         }
         // update database
         try {
             // Check if there will be a duplication for the new course's name
             if (find(DBUtil.getCollection(), and(eq("name", name), exists("deletedAt", false))) != null) {
+                LOG.debug("Response create courses bad request (duplicated name)");
                 return Response.status(Status.BAD_REQUEST).build();
             }
             String timeStamp = DataUtil.getCurrrentTime();
@@ -148,8 +158,10 @@ public class CoursesAPI {
                     .append("createdAt", timeStamp)
                     .append("updatedAt", timeStamp));
             if (ret) {
+                LOG.debug("Response create courses successfully");
                 return Response.status(Status.CREATED).location(URI.create("courses/" + newId)).build();
             } else {
+                LOG.debug("Response create courses bad request (duplicated name with traffic conflict)");
                 return Response.status(Status.BAD_REQUEST).build();
             }
         } catch (Exception ex) {
@@ -170,20 +182,24 @@ public class CoursesAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateCourse(@PathParam("id") int id, String jsonRequest) {
+        LOG.debug("Receive update courses request with id = {}, JSON = {}", id, jsonRequest);
         JSONObject jsonObj = DataUtil.readJsonStr(jsonRequest);
         if (jsonObj == null) {
+            LOG.debug("Response update courses bad request (missing json)");
             return Response.status(Status.BAD_REQUEST).build();
         }
         String name = (String) jsonObj.get("name");
         String status = (String) jsonObj.get("status");
         // validate input params
         if (name == null || "".equals(name.trim()) || status == null || !CourseStatus.isValid(status)) {
+            LOG.debug("Response update courses bad request (missing or blank value)");
             return Response.status(Status.BAD_REQUEST).build();
         }
         
         try {
             // Check if there will be a duplication for new name
             if (find(DBUtil.getCollection(), and(eq("name", name), ne("id", id), exists("deletedAt", false))) != null) {
+                LOG.debug("Response update courses bad request (duplicated name)");
                 return Response.status(Status.BAD_REQUEST).build();
             }
             String timeStamp = DataUtil.getCurrrentTime();
@@ -191,8 +207,10 @@ public class CoursesAPI {
             // Find the record and check the availability
             Document ret = find(DBUtil.getCollection(), eq("id", id));
             if (ret == null) {
+                LOG.debug("Response update courses not found");
                 return Response.status(Status.NOT_FOUND).build();
             } else if (ret.get("deletedAt") != null){
+                LOG.debug("Response update courses gone");
                 return Response.status(Status.GONE).build();
             }
             // Update the record
@@ -201,8 +219,10 @@ public class CoursesAPI {
                     set("status", status),
                     set("updatedAt", timeStamp)));
             if (ret != null) {
+                LOG.debug("Response update courses successfull)");
                 return Response.status(Status.ACCEPTED).build();
             } else {
+                LOG.debug("Response delete courses gone with traffic conflict");
                 return Response.status(Status.GONE).build();
             }
         } catch (Exception ex) {
@@ -221,14 +241,16 @@ public class CoursesAPI {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteCourse(@PathParam("id") int id) {
-        
+        LOG.debug("Receive delete courses request with id = {}", id);
         try {
             String timeStamp = DataUtil.getCurrrentTime();
             // Find the record and check the availability
             Document ret = find(DBUtil.getCollection(), eq("id", id));
             if (ret == null) {
+                LOG.debug("Response delete courses not found");
                 return Response.status(Status.NOT_FOUND).build();
             } else if (ret.get("deletedAt") != null){
+                LOG.debug("Response delete courses gone");
                 return Response.status(Status.GONE).build();
             }
             // mark the record as deleted
@@ -236,8 +258,10 @@ public class CoursesAPI {
                     set("updatedAt ", timeStamp),
                     set("deletedAt", timeStamp)));
             if (ret != null) {
+                LOG.debug("Response delete courses successfully");
                 return Response.status(Status.NO_CONTENT).build();
             } else {
+                LOG.debug("Response delete courses gone with traffic conflict");
                 return Response.status(Status.GONE).build();
             }
         } catch (Exception ex) {
