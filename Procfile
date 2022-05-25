@@ -1,1 +1,1 @@
-web: java -cp target/classes:target/dependency/* org.ifdc.db.Main
+web: java -cp target/classes:target/dependency/* com.techsample.db.Main
