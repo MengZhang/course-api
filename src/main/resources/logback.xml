@@ -1,0 +1,15 @@
+<configuration>
+  <timestamp key="bySecond" datePattern="yyyyMMdd'T'HHmmss"/>
+  <appender name="CLI_S" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+<!-- UNCOMMENT WHICH COMPONENTS TO DEBUG -->
+  <root level="INFO">
+    <appender-ref ref="CLI_S" />
+  </root>
+  
+  <logger name="org.mongodb.driver" level="WARN" />
+</configuration>
