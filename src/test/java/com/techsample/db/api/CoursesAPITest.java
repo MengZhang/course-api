@@ -41,11 +41,13 @@ public class CoursesAPITest extends JerseyTest {
     @Test
     public void testfindCourse() {
         LOG.info("testfindCourse");
+        // normal record case
         String courseId = "2";
         String responseMsg = target().path(BASE).path(courseId).request().get(String.class);
         LOG.info(responseMsg);
         assertEquals("{\"id\": 2, \"name\": \"initla cource2\", \"status\": \"in_production\", \"updatedAt\": \"2001-02-04T04:05:06Z\", \"created_at\": \"2001-02-04T04:05:06Z\"}", responseMsg);
         
+        // deleted record case
         try {
             courseId = "1";
             responseMsg = target().path(BASE).path(courseId).request().get(String.class);
@@ -54,6 +56,7 @@ public class CoursesAPITest extends JerseyTest {
             assertEquals("HTTP 410 Gone", ex.getMessage());
         }
         
+        // no record case
         try {
             courseId = "999";
             responseMsg = target().path(BASE).path(courseId).request().get(String.class);
@@ -67,8 +70,10 @@ public class CoursesAPITest extends JerseyTest {
     @Test
     public void testCreateCourse() {
         LOG.info("testCreateCourse");
+        String courseName = "course" + System.currentTimeMillis();
+        // normal create case
         try {
-            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"test123\", \"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
+            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"" + courseName + "\", \"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
             LOG.info(response.toString());
             LOG.info(response.getLocation().toString());
             LOG.info(target().path(response.getLocation().getPath()).request().get(String.class));
@@ -80,6 +85,15 @@ public class CoursesAPITest extends JerseyTest {
 //            assertEquals("HTTP 404 Not Found", ex.getMessage());
         }
         
+        // duplcate error
+        try {
+            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"" + courseName + "\", \"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
+        } catch (ClientErrorException ex) {
+            LOG.info(ex.getMessage());
+            assertEquals("HTTP 400 Bad Request", ex.getMessage());
+        }
+        
+        // missing value error
         try {
             Response response = target().path(BASE).request().post(Entity.json("{\"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
         } catch (ClientErrorException ex) {
@@ -87,8 +101,17 @@ public class CoursesAPITest extends JerseyTest {
             assertEquals("HTTP 400 Bad Request", ex.getMessage());
         }
         
+        // blank value error
         try {
-            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"test123\", \"status\":\"scheduled2\"}"));
+            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"\", \"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
+        } catch (ClientErrorException ex) {
+            LOG.info(ex.getMessage());
+            assertEquals("HTTP 400 Bad Request", ex.getMessage());
+        }
+        
+        // invalid value error
+        try {
+            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"" + courseName + "\", \"status\":\"scheduled2\"}"));
         } catch (ClientErrorException ex) {
             LOG.info(ex.getMessage());
             assertEquals("HTTP 400 Bad Request", ex.getMessage());
@@ -98,6 +121,8 @@ public class CoursesAPITest extends JerseyTest {
     @Test
     public void testUpdateCourse() {
         LOG.info("testUpdateCourse");
+        String courseName = "course" + System.currentTimeMillis();
+        // normal update case
         try {
             Response response = target().path(BASE).path("3").request().put(Entity.json("{\"name\":\"test789\", \"status\":\"" + CourseStatus.available.toString() + "\"}"));
             LOG.info(response.toString());
@@ -110,6 +135,15 @@ public class CoursesAPITest extends JerseyTest {
 //            assertEquals("HTTP 404 Not Found", ex.getMessage());
         }
         
+        // duplcated name error
+        try {
+            Response response = target().path(BASE).path("3").request().put(Entity.json("{\"name\":\"initla cource2\", \"status\":\"" + CourseStatus.available.toString() + "\"}"));
+        } catch (ClientErrorException ex) {
+            LOG.info(ex.getMessage());
+            assertEquals("HTTP 400 Bad Request", ex.getMessage());
+        }
+        
+        // missing value error
         try {
             Response response = target().path(BASE).path("3").request().put(Entity.json("{\"status\":\"" + CourseStatus.available.toString() + "\"}"));
         } catch (ClientErrorException ex) {
@@ -117,6 +151,15 @@ public class CoursesAPITest extends JerseyTest {
             assertEquals("HTTP 400 Bad Request", ex.getMessage());
         }
         
+        // blank value error
+        try {
+            Response response = target().path(BASE).path("3").request().put(Entity.json("{\"name\":\"\", \"status\":\"" + CourseStatus.available.toString() + "\"}"));
+        } catch (ClientErrorException ex) {
+            LOG.info(ex.getMessage());
+            assertEquals("HTTP 400 Bad Request", ex.getMessage());
+        }
+        
+        // invalid value error
         try {
             Response response = target().path(BASE).path("3").request().put(Entity.json("{\"name\":\"test789\", \"status\":\"available2\"}"));
         } catch (ClientErrorException ex) {
@@ -124,6 +167,7 @@ public class CoursesAPITest extends JerseyTest {
             assertEquals("HTTP 400 Bad Request", ex.getMessage());
         }
         
+        // update deleted record error
         try {
             Response response = target().path(BASE).path("1").request().put(Entity.form(new Form()
                     .param("name", "test123")
@@ -134,6 +178,7 @@ public class CoursesAPITest extends JerseyTest {
             assertEquals("HTTP 410 Gone", ex.getMessage());
         }
         
+        // update non-existed record error
         try {
             Response response = target().path(BASE).path("99").request().put(Entity.form(new Form()
                     .param("name", "test123")
@@ -148,16 +193,21 @@ public class CoursesAPITest extends JerseyTest {
     @Test
     public void testDeleteCourse() {
         LOG.info("testDeleteCourse");
+        // normal delete case
         try {
-            Response response = target().path(BASE).path("4").request().delete();
+            Response response = target().path(BASE).request().post(Entity.json("{\"name\":\"for delete\", \"status\":\"" + CourseStatus.scheduled.toString() + "\"}"));
             LOG.info(response.toString());
-//            assertEquals(204, response.getStatus());
+            LOG.info(response.getLocation().toString());
+            Response response2 = target().path(response.getLocation().getPath()).request().delete();
+            LOG.info(response2.toString());
+            assertEquals(204, response2.getStatus());
             
         } catch (ClientErrorException ex) {
             LOG.info(ex.getMessage());
 //            assertEquals("HTTP 404 Not Found", ex.getMessage());
         }
         
+        // Delete gone record error
         try {
             Response response = target().path(BASE).path("4").request().delete();
             

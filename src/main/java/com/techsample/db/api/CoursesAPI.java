@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.ne;
 import static com.mongodb.client.model.Projections.computed;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Projections.fields;
@@ -134,6 +135,10 @@ public class CoursesAPI {
         }
         // update database
         try {
+            // Check if there will be a duplication for the new course's name
+            if (find(DBUtil.getCollection(), and(eq("name", name), exists("deletedAt", false))) != null) {
+                return Response.status(Status.BAD_REQUEST).build();
+            }
             String timeStamp = DataUtil.getCurrrentTime();
             int newId = createNewId(DBUtil.COURSES_COLLECTION_NAME); // generate a new ID with auto-increasement
             boolean ret = add(DBUtil.getCollection(), new Document()
@@ -145,7 +150,7 @@ public class CoursesAPI {
             if (ret) {
                 return Response.status(Status.CREATED).location(URI.create("courses/" + newId)).build();
             } else {
-                return Response.status(Status.CONFLICT).build();
+                return Response.status(Status.BAD_REQUEST).build();
             }
         } catch (Exception ex) {
             LOG.warn(ex.getMessage());
@@ -175,8 +180,12 @@ public class CoursesAPI {
         if (name == null || "".equals(name.trim()) || status == null || !CourseStatus.isValid(status)) {
             return Response.status(Status.BAD_REQUEST).build();
         }
-        // update database
+        
         try {
+            // Check if there will be a duplication for new name
+            if (find(DBUtil.getCollection(), and(eq("name", name), ne("id", id), exists("deletedAt", false))) != null) {
+                return Response.status(Status.BAD_REQUEST).build();
+            }
             String timeStamp = DataUtil.getCurrrentTime();
             
             // Find the record and check the availability
